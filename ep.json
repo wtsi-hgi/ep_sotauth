@@ -1,0 +1,13 @@
+{
+    "parts": [
+        {
+            "name": "ep_sotauth",
+            "hooks": {
+                "expressConfigure" : "ep_sotauth/ep_sotauth:expressConfigure",
+                "authenticate" : "ep_sotauth/ep_sotauth:authenticate",
+                "authorize" : "ep_sotauth/ep_sotauth:authorize",
+		"handleMessage" : "ep_sotauth/ep_sotauth:handleMessage"
+            }
+        }
+    ]
+}

@@ -6,7 +6,7 @@
   "dependencies": {
   		  "log4js"              : "0.5.x",
                   "async-stacktrace"    : "0.0.2"
-  }
+  },
   "engines": {
     "node": "*"
   },

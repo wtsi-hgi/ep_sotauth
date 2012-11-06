@@ -2,7 +2,7 @@
   "name": "ep_sotauth",
   "description": "Hooks into etherpad lite auth to trust that whatever user is set in the X-Forwarded-User HTTP header is an authorised and authenticated user. This is useful when running behind a reverse proxy that handles authentication (such as when using Apache with Shibboleth authentication).",
   "homepage": "https://github.com/wtsi-hgi/ep_sotauth",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "dependencies": {
   		  "log4js"              : "0.5.x",
                   "async-stacktrace"    : "0.0.2"

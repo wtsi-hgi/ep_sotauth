@@ -29,8 +29,8 @@ function sotauthSetUsername(token, username) {
 
 exports.authenticate = function(hook_name, context, cb) {
   console.debug('ep_sotauth.authenticate');
-  if (context.req.get('x-forwarded-user')) {
-    var username = context.req.get('x-forwarded-user');
+  if (context.req.headers['x-forwarded-user']) {
+    var username = context.req.headers['x-forwarded-user'];
     var express_sid = context.req.sessionID;
     console.debug('ep_sotauth.authenticate: have x-forwarded-user = %s for express_sid = %s', username, express_sid);
     context.req.session.user = username;
@@ -60,9 +60,9 @@ exports.handleMessage = function(hook_name, context, cb) {
     }
   } else if( context.message.type == "COLLABROOM" && context.message.data.type == "USERINFO_UPDATE" ) {
     console.debug('ep_sotauth.handleMessage: intercepted USERINFO_UPDATE and dropping it!');
-    return null;
+    return cb([null]);
   }
-  return cb();
+  return cb([context.message]);
 }
 
 

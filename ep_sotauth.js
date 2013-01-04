@@ -79,7 +79,11 @@ exports.authorize = function(hook_name, context, cb) {
     return cb([true]);
   } else {
     console.debug('ep_sotauth.authorize: passing authorize along for path %s', context.resource);
-    return cb([false]);
+    if (context.req.session.user !== undefined) {
+        return cb([true]);
+    } else {
+        return cb([false]);
+    }
   }
 }
 

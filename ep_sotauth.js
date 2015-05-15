@@ -54,7 +54,7 @@ exports.handleMessage = function(hook_name, context, cb) {
       console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message has no token!');
     } else {
       var client_id = context.client.id;
-      var express_sid = context.client.manager.handshaken[client_id].sessionID;
+      var express_sid = context.client.client.request.sessionID;
       console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message for client_id = %s express_sid = %s, setting username for token %s to %s', client_id, express_sid, context.message.token, sotauthUsername);
       sotauthSetUsername(context.message.token, sotauthUsername[express_sid]);
     }

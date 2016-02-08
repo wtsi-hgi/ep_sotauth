@@ -4,8 +4,6 @@ var settings = require('ep_etherpad-lite/node/utils/Settings');
 var exp = require('ep_etherpad-lite/node_modules/express');
 var authorManager = require("ep_etherpad-lite/node/db/AuthorManager");
 
-/* sotauthUsername is set by authenticate and used in messageHandler, keyed on express_sid */
-var sotauthUsername = {};
 
 
 function sotauthSetUsername(token, username) {
@@ -38,7 +36,6 @@ exports.authenticate = function(hook_name, context, cb) {
     settings.users[username].username = username;
     settings.globalUserName = username;
     console.debug('ep_sotauth.authenticate: deferring setting of username [%s] to CLIENT_READY for express_sid = %s', username, express_sid);
-    sotauthUsername[express_sid] = username;
     return cb([true]);
   } else {
     console.debug('ep_sotauth.authenticate: have no x-forwarded-user for express_sid = %s', express_sid);
@@ -53,10 +50,7 @@ exports.handleMessage = function(hook_name, context, cb) {
     if(!context.message.token) {
       console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message has no token!');
     } else {
-      var client_id = context.client.id;
-      var express_sid = context.client.manager.handshaken[client_id].sessionID;
-      console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message for client_id = %s express_sid = %s, setting username for token %s to %s', client_id, express_sid, context.message.token, sotauthUsername);
-      sotauthSetUsername(context.message.token, sotauthUsername[express_sid]);
+      sotauthSetUsername(context.message.token, context.client.handshake.headers['x-forwarded-user']);
     }
   } else if( context.message.type == "COLLABROOM" && context.message.data.type == "USERINFO_UPDATE" ) {
     console.debug('ep_sotauth.handleMessage: intercepted USERINFO_UPDATE and dropping it!');

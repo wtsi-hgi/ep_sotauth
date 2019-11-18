@@ -6,39 +6,36 @@ var authorManager = require("ep_etherpad-lite/node/db/AuthorManager");
 
 /* sotauthUsername is set by authenticate and used in messageHandler, keyed on express_sid */
 var sotauthUsername = {};
+var mySotAuthOpts = {};
 
-
-function sotauthSetUsername(token, username) {
+async function sotauthSetUsername(token, username) {
       console.debug('ep_sotauth.sotauthSetUsername: getting authorid for token %s', token);
-      authorManager.getAuthor4Token(token, function(err, author) {
-	if(ERR(err)) {
-	  console.debug('ep_sotauth.sotauthSetUsername: error getting author for token %s', token);
-	  return;
-	} else {
-	  if(author) {
-	    console.debug('ep_sotauth.sotauthSetUsername: have authorid %s, setting username to %s', author, username);
-	    authorManager.setAuthorName(author, username);
-	  } else {
-	    console.debug('ep_sotauth.sotauthSetUsername: could not get authorid for token %s', token);
-	  }
-	}
-      });
+      let author_promise = authorManager.getAuthor4Token(token);
+      let author = await author_promise;
+    	if(author) {
+      	console.debug('ep_sotauth.sotauthSetUsername: have authorid %s, setting username to %s', author, username);
+    	  authorManager.setAuthorName(author, username);
+    	} else {
+    	  console.debug('ep_sotauth.sotauthSetUsername: could not get authorid for token %s', token);
+    	}
       return;
 }
 
 
 exports.authenticate = function(hook_name, context, cb) {
   console.debug('ep_sotauth.authenticate');
-  if (context.req.headers['x-forwarded-user']) {
-    var username = context.req.headers['x-forwarded-user'];
+  mySotAuthOpts.usernameHeader = (typeof settings.users.sotauth === 'undefined' || typeof settings.users.sotauth.usernameHeader === 'undefined') ? 'x-forwarded-user' : settings.users.sotauth.usernameHeader;
+  mySotAuthOpts.displaynameHeader = (typeof settings.users.sotauth === 'undefined' || typeof settings.users.sotauth.displaynameHeader === 'undefined') ? 'x-forwarded-user' : settings.users.sotauth.displaynameHeader;
+  if (context.req.headers[mySotAuthOpts.usernameHeader]) {
+    var username = context.req.headers[mySotAuthOpts.usernameHeader];
+    var displayName = context.req.headers[mySotAuthOpts.displaynameHeader] || username;
     var express_sid = context.req.sessionID;
-    console.debug('ep_sotauth.authenticate: have x-forwarded-user = %s for express_sid = %s', username, express_sid);
+    console.debug('ep_sotauth.authenticate: have %s = %s for express_sid = %s', mySotAuthOpts.usernameHeader, username, express_sid);
     context.req.session.user = username;
     if (settings.users[username] == undefined) settings.users[username] = {};
     settings.users[username].username = username;
     settings.globalUserName = username;
-    console.debug('ep_sotauth.authenticate: deferring setting of username [%s] to CLIENT_READY for express_sid = %s', username, express_sid);
-    sotauthUsername[express_sid] = username;
+    sotauthUsername[express_sid] = displayName;
     return cb([true]);
   } else {
     console.debug('ep_sotauth.authenticate: have no x-forwarded-user for express_sid = %s', express_sid);
@@ -54,7 +51,7 @@ exports.handleMessage = function(hook_name, context, cb) {
       console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message has no token!');
     } else {
       var client_id = context.client.id;
-      var express_sid = context.client.manager.handshaken[client_id].sessionID;
+      var express_sid = context.client.client.request.sessionID;
       console.debug('ep_sotauth.handleMessage: intercepted CLIENT_READY message for client_id = %s express_sid = %s, setting username for token %s to %s', client_id, express_sid, context.message.token, sotauthUsername);
       sotauthSetUsername(context.message.token, sotauthUsername[express_sid]);
     }
@@ -72,6 +69,7 @@ exports.expressConfigure = function(hook_name, context, cb) {
 }
 
 
+
 exports.authorize = function(hook_name, context, cb) {
   console.debug('ep_sotauth.authorize');
   if (context.resource.match(/^\/(static|javascripts|pluginfw|favicon.ico|api)/)) {
@@ -86,5 +84,3 @@ exports.authorize = function(hook_name, context, cb) {
     }
   }
 }
-
-
